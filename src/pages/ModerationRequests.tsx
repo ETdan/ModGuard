@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+
 import {
   Table,
   TableBody,
@@ -185,9 +186,9 @@ export default function ModerationRequests() {
     const anyFlagged = currentRequest.flags.some((flag) => flag.flagged);
     const newStatus = anyFlagged ? "flagged" : "clean";
 
-    const updatedRequest = {
+    const updatedRequest: ModerationRequest = {
       ...currentRequest,
-      status: newStatus,
+      status: newStatus as "flagged" | "clean" | "borderline",
       feedback: feedbackText || undefined,
     };
 
