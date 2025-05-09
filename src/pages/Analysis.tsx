@@ -49,7 +49,7 @@ export default function Analysis() {
 
     try {
       const response = await fetch(
-        "https://modgaurdbac-server-faf5c0bzh9fze5hx.israelcentral-01.azurewebsites.net/moderate",
+        import.meta.env.VITE_PUBLIC_TEST_MODERATION_URL,
         {
           method: "POST",
           headers: {
@@ -64,14 +64,12 @@ export default function Analysis() {
 
       const data: Array<{ flag_type: ModerationType; value: number }> =
         await response.json();
-      console.log(response);
+
       const flags = data.map((item) => ({
         type: item.flag_type,
         score: item.value,
         flagged: item.value >= threshold,
       }));
-
-      console.log(flags);
 
       const anyFlagged = flags.some((flag) => flag.flagged);
 
@@ -99,16 +97,13 @@ export default function Analysis() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        "https://modgaurdbac-server-faf5c0bzh9fze5hx.israelcentral-01.azurewebsites.net/moderate",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ content: imageUrl }),
-        }
-      );
+      const response = await fetch(import.meta.env.VITE_MODERATION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: imageUrl }),
+      });
 
       const data: Array<{ flag_type: ModerationType; value: number }> =
         await response.json();
