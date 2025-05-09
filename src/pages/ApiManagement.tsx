@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import supabase from "@/services/supabase";
 import {
   Card,
   CardContent,
@@ -18,11 +19,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { X } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/context/UserContext";
 
 type ApiKey = {
   id: string;
@@ -31,44 +32,43 @@ type ApiKey = {
   scopes: string[];
   created: string;
   lastUsed: string | null;
+  user_id: string | null;
 };
 
 export default function ApiManagement() {
   const { toast } = useToast();
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([
-    {
-      id: "1",
-      name: "Production API Key",
-      key: "sk_prod_2a3b4c5d6e7f8g9h",
-      scopes: ["read", "write"],
-      created: "2023-04-10T15:30:00Z",
-      lastUsed: "2023-05-05T14:22:10Z",
-    },
-    {
-      id: "2",
-      name: "Development API Key",
-      key: "sk_dev_9h8g7f6e5d4c3b2a",
-      scopes: ["read"],
-      created: "2023-04-20T12:15:00Z",
-      lastUsed: "2023-05-04T09:45:32Z",
-    },
-    {
-      id: "3",
-      name: "Test Environment",
-      key: "sk_test_5d6e7f8g9h1a2b3c",
-      scopes: ["read", "write", "admin"],
-      created: "2023-05-01T08:00:00Z",
-      lastUsed: null,
-    },
-  ]);
+  const user_id = useUser().user?.id;
+  const session = useUser()?.session;
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+
+  useEffect(() => {
+    const fetchApiKeys = async () => {
+      try {
+        const { data: api_key, error } = await supabase
+          .from("api_key")
+          .select("*");
+
+        if (error) {
+          console.error("Error fetching API keys:", error);
+          return;
+        }
+
+        if (api_key) {
+          setApiKeys(api_key);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching API keys:", err);
+      }
+    };
+
+    fetchApiKeys();
+  }, []);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
   const [newKeyScopes, setNewKeyScopes] = useState<string[]>(["read"]);
   const [isRevealDialogOpen, setIsRevealDialogOpen] = useState(false);
-  const [newlyCreatedKey, setNewlyCreatedKey] = useState("");
-
-  const handleCreateKey = () => {
+  const handleCreateKey = async () => {
     if (!newKeyName.trim()) {
       toast({
         title: "Error",
@@ -78,26 +78,58 @@ export default function ApiManagement() {
       return;
     }
 
-    // Generate a mock key for demonstration
-    const mockKey = `sk_${Math.random().toString(36).substring(2, 15)}`;
+    try {
+      const { error } = await supabase.from("api_key").insert([
+        {
+          name: newKeyName,
+          scopes: newKeyScopes,
+          user_id: user_id,
+        },
+      ]);
 
-    const newKey: ApiKey = {
-      id: Math.random().toString(36).substring(2, 9),
-      name: newKeyName,
-      key: mockKey,
-      scopes: newKeyScopes,
-      created: new Date().toISOString(),
-      lastUsed: null,
-    };
+      if (error) {
+        console.error("Error creating API key:", error);
+        toast({
+          title: "Error",
+          description: "Failed to create API key. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const { data: updatedKeys, error: fetchError } = await supabase
+        .from("api_key")
+        .select("*");
 
-    setApiKeys([...apiKeys, newKey]);
-    setNewlyCreatedKey(mockKey);
-    setIsCreateDialogOpen(false);
-    setIsRevealDialogOpen(true);
+      if (fetchError) {
+        console.error("Error fetching updated API keys:", fetchError);
+        toast({
+          title: "Error",
+          description: "Failed to fetch updated API keys. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    // Reset form
-    setNewKeyName("");
-    setNewKeyScopes(["read"]);
+      if (updatedKeys) {
+        setApiKeys(updatedKeys);
+      }
+
+      setIsCreateDialogOpen(false);
+      setIsRevealDialogOpen(true);
+      // fetchApiKeys();
+
+      toast({
+        title: "API Key Created",
+        description: "Your new API key has been created successfully.",
+      });
+    } catch (err) {
+      console.error("Unexpected error creating API key:", err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleScopeChange = (scope: string) => {
@@ -106,16 +138,37 @@ export default function ApiManagement() {
     );
   };
 
-  const handleRevokeKey = (id: string) => {
-    setApiKeys(apiKeys.filter((key) => key.id !== id));
-    toast({
-      title: "API Key Revoked",
-      description: "The API key has been revoked successfully.",
-    });
+  const handleRevokeKey = async (id: string) => {
+    try {
+      const { error } = await supabase.from("api_key").delete().eq("id", id);
+      console.log("id", id);
+      if (error) {
+        console.error("Error revoking API key:", error);
+        toast({
+          title: "Error",
+          description: "Failed to revoke API key. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setApiKeys(apiKeys.filter((key) => key.id !== id));
+      toast({
+        title: "API Key Revoked",
+        description: "The API key has been revoked successfully.",
+      });
+    } catch (err) {
+      console.error("Unexpected error revoking API key:", err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCopyKey = () => {
-    navigator.clipboard.writeText(newlyCreatedKey);
+    navigator.clipboard.writeText(apiKeys[apiKeys.length - 1]?.key);
     toast({
       title: "Copied to Clipboard",
       description: "API key copied to clipboard successfully.",
@@ -332,7 +385,7 @@ export default function ApiManagement() {
 
           <div className="py-4">
             <div className="p-4 bg-muted rounded-md font-mono text-sm break-all">
-              {newlyCreatedKey}
+              {apiKeys[apiKeys.length - 1]?.key}
             </div>
           </div>
 

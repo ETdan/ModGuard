@@ -7,6 +7,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import AppSidebar from "@/components/AppSidebar";
+// import { console } from "inspector";
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
@@ -15,18 +16,15 @@ interface AuthenticatedLayoutProps {
 export default function AuthenticatedLayout({
   children,
 }: AuthenticatedLayoutProps) {
-  const { isAuthenticated } = useUser();
+  const { isAuthenticated, loading } = useUser();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    // console.log("isAuthenticated", isAuthenticated);
+    if (!isAuthenticated && !loading) {
       navigate("/login");
     }
-  }, [isAuthenticated, navigate]);
-
-  if (!isAuthenticated) {
-    return null; // Or a loading spinner
-  }
+  }, [loading, isAuthenticated, navigate]);
 
   return (
     <SidebarProvider>

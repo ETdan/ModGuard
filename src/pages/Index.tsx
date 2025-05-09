@@ -1,7 +1,12 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ApiRequestDemo from "@/components/ApiRequestDemo";
@@ -50,7 +55,7 @@ Content-Type: application/json
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      
+
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="bg-background py-16 sm:py-24">
@@ -63,21 +68,24 @@ Content-Type: application/json
                   <span className="block">in real-time</span>
                 </h1>
                 <p className="mt-6 text-lg leading-8 text-muted-foreground">
-                  ModGuard's AI-powered content moderation API helps you keep your platform safe.
-                  Detect toxicity, hate speech, harassment, and more through our simple API.
+                  ModGuard's AI-powered content moderation API helps you keep
+                  your platform safe. Detect toxicity, hate speech, harassment,
+                  and more through our simple API.
                 </p>
                 <div className="mt-8 flex flex-wrap gap-4">
                   <Link to="/signup">
                     <Button size="lg">Get Started</Button>
                   </Link>
-                  <Link to="/docs">
-                    <Button variant="outline" size="lg">View Documentation</Button>
+                  <Link to="/documentation">
+                    <Button variant="outline" size="lg">
+                      View Documentation
+                    </Button>
                   </Link>
                 </div>
               </div>
               <div className="mt-12 lg:mt-0 lg:col-span-6">
                 <div className="bg-secondary/30 border border-secondary p-6 rounded-lg shadow-lg">
-                  <ApiRequestDemo 
+                  <ApiRequestDemo
                     apiEndpoint="/api/v1/moderate/text"
                     requestData={textModerationRequest}
                     responseData={textModerationResponse}
@@ -87,7 +95,7 @@ Content-Type: application/json
             </div>
           </div>
         </section>
-        
+
         {/* Feature Highlights */}
         <section className="bg-muted py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -99,7 +107,7 @@ Content-Type: application/json
                 Everything you need to keep your platform safe and welcoming
               </p>
             </div>
-            
+
             <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               <Card>
                 <CardHeader>
@@ -107,75 +115,77 @@ Content-Type: application/json
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Detect toxicity, hate speech, harassment, and more in text content with high accuracy.
-                    Our models are constantly trained on the latest data.
+                    Detect toxicity, hate speech, harassment, and more in text
+                    content with high accuracy. Our models are constantly
+                    trained on the latest data.
                   </CardDescription>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>Image Moderation</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Automatically detect NSFW images, violence, and other inappropriate visual content
-                    to protect your users and brand.
+                    Automatically detect NSFW images, violence, and other
+                    inappropriate visual content to protect your users and
+                    brand.
                   </CardDescription>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>Real-time API</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Low-latency API designed for real-time moderation needs. Integrate with our
-                    SDKs for Python, JavaScript, and more.
+                    Low-latency API designed for real-time moderation needs.
+                    Integrate with our SDKs for Python, JavaScript, and more.
                   </CardDescription>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>Comprehensive Dashboard</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Track moderation activity, review flagged content, and get insights into
-                    content patterns across your platform.
+                    Track moderation activity, review flagged content, and get
+                    insights into content patterns across your platform.
                   </CardDescription>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>Customizable Thresholds</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Set your own sensitivity levels for different types of content and
-                    categories of violations.
+                    Set your own sensitivity levels for different types of
+                    content and categories of violations.
                   </CardDescription>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle>Human Review Tools</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription>
-                    Review borderline content with our human-in-the-loop tools to
-                    improve accuracy and reduce false positives.
+                    Review borderline content with our human-in-the-loop tools
+                    to improve accuracy and reduce false positives.
                   </CardDescription>
                 </CardContent>
               </Card>
             </div>
           </div>
         </section>
-        
+
         {/* CTA Section */}
         <section className="bg-background py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -195,14 +205,15 @@ Content-Type: application/json
                   </Link>
                 </div>
                 <p className="mt-4 text-sm text-primary-foreground/70">
-                  No credit card required. 1,000 API calls included in free plan.
+                  No credit card required. 1,000 API calls included in free
+                  plan.
                 </p>
               </div>
             </div>
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

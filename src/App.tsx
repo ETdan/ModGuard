@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,6 +20,7 @@ import Analysis from "./pages/Analysis";
 import Documentation from "./pages/Documentation";
 import UserSettings from "./pages/UserSettings";
 import ModerationRequests from "./pages/ModerationRequests";
+import EmailConfirmation from "./pages/EmailConfirmation";
 
 const queryClient = new QueryClient();
 
@@ -36,40 +36,52 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/email-confirmation" element={<EmailConfirmation />} />
             <Route path="/pricing" element={<Pricing />} />
-            
+            <Route path="/documentation" element={<Documentation />} />
+
             {/* Protected Routes */}
-            <Route path="/dashboard" element={
-              <AuthenticatedLayout>
-                <Dashboard />
-              </AuthenticatedLayout>
-            } />
-            <Route path="/api-management" element={
-              <AuthenticatedLayout>
-                <ApiManagement />
-              </AuthenticatedLayout>
-            } />
-            <Route path="/analysis" element={
-              <AuthenticatedLayout>
-                <Analysis />
-              </AuthenticatedLayout>
-            } />
-            <Route path="/documentation" element={
-              <AuthenticatedLayout>
-                <Documentation />
-              </AuthenticatedLayout>
-            } />
-            <Route path="/settings" element={
-              <AuthenticatedLayout>
-                <UserSettings />
-              </AuthenticatedLayout>
-            } />
-            <Route path="/moderation-requests" element={
-              <AuthenticatedLayout>
-                <ModerationRequests />
-              </AuthenticatedLayout>
-            } />
-            
+            <Route
+              path="/dashboard"
+              element={
+                <AuthenticatedLayout>
+                  <Dashboard />
+                </AuthenticatedLayout>
+              }
+            />
+            <Route
+              path="/api-management"
+              element={
+                <AuthenticatedLayout>
+                  <ApiManagement />
+                </AuthenticatedLayout>
+              }
+            />
+            <Route
+              path="/analysis"
+              element={
+                <AuthenticatedLayout>
+                  <Analysis />
+                </AuthenticatedLayout>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <AuthenticatedLayout>
+                  <UserSettings />
+                </AuthenticatedLayout>
+              }
+            />
+            <Route
+              path="/moderation-requests"
+              element={
+                <AuthenticatedLayout>
+                  <ModerationRequests />
+                </AuthenticatedLayout>
+              }
+            />
+
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>

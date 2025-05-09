@@ -1,12 +1,18 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/context/UserContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 
@@ -15,16 +21,15 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  
+
   const { login } = useUser();
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-    
+
     try {
       await login(email, password);
       toast({
@@ -39,12 +44,29 @@ export default function Login() {
     }
   };
 
+  const { isAuthenticated } = useUser();
+  const navigate = useNavigate();
+  console.log("localSession form context", isAuthenticated);
+
+  useEffect(() => {
+    console.log("isAuthenticated", isAuthenticated);
+    if (!isAuthenticated) {
+      navigate("/login");
+    } else {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Sign in to ModGuard</CardTitle>
-          <CardDescription>Enter your credentials to access your account</CardDescription>
+          <CardTitle className="text-2xl font-bold">
+            Sign in to ModGuard
+          </CardTitle>
+          <CardDescription>
+            Enter your credentials to access your account
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -55,10 +77,10 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="name@example.com" 
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -67,13 +89,16 @@ export default function Login() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-primary hover:underline"
+                >
                   Forgot password?
                 </Link>
               </div>
-              <Input 
-                id="password" 
-                type="password" 
+              <Input
+                id="password"
+                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

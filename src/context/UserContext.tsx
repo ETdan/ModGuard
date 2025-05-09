@@ -1,88 +1,118 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
+import supabase from "@/services/supabase";
 
 type User = {
   id: string;
   email: string;
-  name: string;
-  plan: "free" | "pro" | "enterprise";
 };
 
 type UserContextType = {
   user: User | null;
+  session: unknown | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  signup: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  loading: boolean;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<unknown | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Check local storage for existing user session on initial load
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      setIsAuthenticated(true);
-    }
+    const fetchSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error fetching session:", error.message);
+        return;
+      }
+      if (data.session) {
+        setSession(data.session);
+        setIsAuthenticated(true);
+        const { user } = data.session;
+        if (user) {
+          setUser({
+            id: user.id,
+            email: user.email!,
+          });
+        }
+      }
+      setLoading(false);
+    };
+    fetchSession();
   }, []);
 
-  // In a real app, this would call a backend API
   const login = async (email: string, password: string) => {
-    // This is mock authentication for demo purposes
-    // In a real app, you would validate credentials with a backend
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    if (password.length < 6) {
-      throw new Error("Invalid credentials");
-    }
-    
-    const newUser: User = {
-      id: "user-" + Math.random().toString(36).substring(2, 9),
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      name: email.split('@')[0],
-      plan: "free"
-    };
-    
-    setUser(newUser);
-    setIsAuthenticated(true);
-    localStorage.setItem("user", JSON.stringify(newUser));
+      password,
+    });
+    if (error) throw new Error(error.message);
+
+    if (data.user) {
+      setUser({
+        id: data.user.id,
+        email: data.user.email!,
+      });
+
+      if (data.session) {
+        setSession(data.session);
+        setIsAuthenticated(true);
+      } else {
+        console.log(
+          "No session returned. Email confirmation might be required."
+        );
+      }
+    }
   };
 
-  const signup = async (name: string, email: string, password: string) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    if (password.length < 6) {
-      throw new Error("Password must be at least 6 characters");
-    }
-    
-    const newUser: User = {
-      id: "user-" + Math.random().toString(36).substring(2, 9),
+  const signup = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signUp({
       email,
-      name,
-      plan: "free"
-    };
-    
-    setUser(newUser);
-    setIsAuthenticated(true);
-    localStorage.setItem("user", JSON.stringify(newUser));
+      password,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (data.user) {
+      setUser({
+        id: data.user.id,
+        email: data.user.email!,
+      });
+
+      if (data.session) {
+        setSession(data.session);
+        setIsAuthenticated(true);
+      } else {
+        console.log(
+          "No session returned. Email confirmation might be required."
+        );
+      }
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new Error(error.message);
+
     setUser(null);
+    setSession(null);
     setIsAuthenticated(false);
-    localStorage.removeItem("user");
   };
 
   return (
-    <UserContext.Provider value={{ user, isAuthenticated, login, signup, logout }}>
+    <UserContext.Provider
+      value={{ session, user, isAuthenticated, login, signup, logout, loading }}
+    >
       {children}
     </UserContext.Provider>
   );

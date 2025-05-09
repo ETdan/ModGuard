@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,10 +24,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ModerationBadge from "@/components/ModerationBadge";
-import { Check, Edit, Eye, FileText, X } from "lucide-react";
+import { Check, Edit, FileText, X } from "lucide-react";
+import {
+  fetchRequestData,
+  updateRequestData,
+  deleteRequestData,
+} from "@/services/supabase";
 
 type ModerationType =
   | "toxicity"
@@ -37,130 +41,50 @@ type ModerationType =
   | "violence"
   | "spam";
 
+// New type for the single flag object
+type FlagObject = {
+  type: ModerationType;
+  score: number;
+  flagged: boolean;
+};
+
 type ModerationRequest = {
   id: string;
   timestamp: string;
-  contentType: "text" | "image";
+  content_type: "text" | "image";
   content: string;
-  flags: Array<{
-    type: ModerationType;
-    score: number;
-    flagged: boolean;
-  }>;
+  flags?: FlagObject;
   status: "flagged" | "clean" | "borderline";
   feedback?: string;
 };
 
-// Sample data
-const sampleRequests: ModerationRequest[] = [
-  {
-    id: "req_1234567890",
-    timestamp: "2023-07-15T14:32:10Z",
-    contentType: "text",
-    content: "You're such a stupid idiot! I can't believe how dumb you are.",
-    flags: [
-      { type: "toxicity", score: 0.92, flagged: true },
-      { type: "harassment", score: 0.85, flagged: true },
-      { type: "hate-speech", score: 0.45, flagged: false },
-      { type: "sexual", score: 0.12, flagged: false },
-      { type: "violence", score: 0.08, flagged: false },
-      { type: "spam", score: 0.05, flagged: false },
-    ],
-    status: "flagged",
-  },
-  {
-    id: "req_2345678901",
-    timestamp: "2023-07-15T13:45:22Z",
-    contentType: "text",
-    content:
-      "I disagree with your opinion on this matter. Let's discuss further.",
-    flags: [
-      { type: "toxicity", score: 0.15, flagged: false },
-      { type: "harassment", score: 0.12, flagged: false },
-      { type: "hate-speech", score: 0.05, flagged: false },
-      { type: "sexual", score: 0.01, flagged: false },
-      { type: "violence", score: 0.02, flagged: false },
-      { type: "spam", score: 0.08, flagged: false },
-    ],
-    status: "clean",
-  },
-  {
-    id: "req_3456789012",
-    timestamp: "2023-07-15T12:18:45Z",
-    contentType: "image",
-    content: "profile_picture.jpg",
-    flags: [
-      { type: "sexual", score: 0.68, flagged: false },
-      { type: "violence", score: 0.12, flagged: false },
-      { type: "hate-speech", score: 0.05, flagged: false },
-    ],
-    status: "borderline",
-    feedback:
-      "Image is borderline inappropriate but not explicit enough to flag.",
-  },
-  {
-    id: "req_4567890123",
-    timestamp: "2023-07-15T11:03:12Z",
-    contentType: "text",
-    content:
-      "I hate all people from that country. They should all go back where they came from!",
-    flags: [
-      { type: "toxicity", score: 0.78, flagged: true },
-      { type: "harassment", score: 0.65, flagged: true },
-      { type: "hate-speech", score: 0.92, flagged: true },
-      { type: "sexual", score: 0.05, flagged: false },
-      { type: "violence", score: 0.35, flagged: false },
-      { type: "spam", score: 0.02, flagged: false },
-    ],
-    status: "flagged",
-  },
-  {
-    id: "req_5678901234",
-    timestamp: "2023-07-15T10:27:33Z",
-    contentType: "text",
-    content:
-      "Don't miss this amazing opportunity! Click now to claim your prize: www.definitely-not-a-scam.com",
-    flags: [
-      { type: "toxicity", score: 0.25, flagged: false },
-      { type: "harassment", score: 0.15, flagged: false },
-      { type: "hate-speech", score: 0.05, flagged: false },
-      { type: "sexual", score: 0.08, flagged: false },
-      { type: "violence", score: 0.02, flagged: false },
-      { type: "spam", score: 0.95, flagged: true },
-    ],
-    status: "flagged",
-  },
-  {
-    id: "req_6789012345",
-    timestamp: "2023-07-15T09:15:42Z",
-    contentType: "text",
-    content: "Thank you for your help with this issue. I really appreciate it.",
-    flags: [
-      { type: "toxicity", score: 0.02, flagged: false },
-      { type: "harassment", score: 0.01, flagged: false },
-      { type: "hate-speech", score: 0.01, flagged: false },
-      { type: "sexual", score: 0.01, flagged: false },
-      { type: "violence", score: 0.01, flagged: false },
-      { type: "spam", score: 0.15, flagged: false },
-    ],
-    status: "clean",
-  },
-];
-
 export default function ModerationRequests() {
-  const [requests, setRequests] = useState<ModerationRequest[]>(sampleRequests);
-  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [requests, setRequests] = useState<ModerationRequest[]>([]);
+  // const [expandedRow, setExpandedRow] = useState<string | null>(null); // Not used in the provided code, can be removed if not needed elsewhere
   const [currentRequest, setCurrentRequest] =
     useState<ModerationRequest | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [feedbackText, setFeedbackText] = useState("");
 
-  const handleViewRequest = (request: ModerationRequest) => {
-    setCurrentRequest(request);
-    setEditMode(false);
-    setFeedbackText(request.feedback || "");
-  };
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const data = await fetchRequestData();
+        // console.log("Fetched requests:", data); // Useful for debugging the new structure
+        setRequests(data as ModerationRequest[]); // Assuming fetchRequestData returns the correct new structure
+      } catch (error) {
+        console.error("Fetch error:", error);
+        toast({
+          title: "Error fetching requests",
+          description: "Failed to fetch moderation requests from the server.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchRequests();
+  }, []);
 
   const handleEditRequest = (request: ModerationRequest) => {
     setCurrentRequest(request);
@@ -168,42 +92,87 @@ export default function ModerationRequests() {
     setFeedbackText(request.feedback || "");
   };
 
-  const toggleFlag = (flagType: ModerationType) => {
-    if (!currentRequest) return;
+  const handleDeleteRequest = async (requestId: string) => {
+    try {
+      // Assuming you have a function to delete the request from the server
+      await deleteRequestData(requestId); // Implement this function in your service layer
+      setRequests((prev) => prev.filter((req) => req.id !== requestId));
+      toast({
+        title: "Request deleted",
+        description: `Moderation request ${requestId} has been deleted.`,
+      });
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast({
+        title: "Error deleting request",
+        description: "Failed to delete the moderation request.",
+        variant: "destructive",
+      });
+    }
+  };
 
-    setCurrentRequest({
-      ...currentRequest,
-      flags: currentRequest.flags.map((flag) =>
-        flag.type === flagType ? { ...flag, flagged: !flag.flagged } : flag
-      ),
+  // Updated: Toggles the 'flagged' status of the single 'flags' object
+  const toggleCurrentRequestFlag = () => {
+    if (!currentRequest || !currentRequest.flags) {
+      // If there are no flags on the current request, we can't toggle it.
+      // Optionally, one could initialize a default flag object here if needed.
+      console.warn(
+        "Attempted to toggle flag on a request with no flags object."
+      );
+      return;
+    }
+
+    setCurrentRequest((prevRequest) => {
+      if (!prevRequest || !prevRequest.flags) return prevRequest; // Should ideally not happen if initial check passed
+      return {
+        ...prevRequest,
+        flags: {
+          ...prevRequest.flags,
+          flagged: !prevRequest.flags.flagged,
+        },
+      };
     });
   };
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     if (!currentRequest) return;
 
-    // Calculate new status based on flags
-    const anyFlagged = currentRequest.flags.some((flag) => flag.flagged);
-    const newStatus = anyFlagged ? "flagged" : "clean";
+    // Updated: Calculate new status based on the single flag object
+    const isFlagged = currentRequest.flags
+      ? currentRequest.flags.flagged
+      : false;
+    // This logic might override a 'borderline' status if the flag is toggled.
+    // If 'borderline' needs to be preserved or set under other conditions, this logic might need adjustment.
+    const newStatus = isFlagged ? "flagged" : "clean";
 
     const updatedRequest: ModerationRequest = {
       ...currentRequest,
-      status: newStatus as "flagged" | "clean" | "borderline",
       feedback: feedbackText || undefined,
+      // currentRequest.flags already contains the latest toggled state
     };
 
-    // Update the request in the list
-    setRequests((prev) =>
-      prev.map((req) => (req.id === updatedRequest.id ? updatedRequest : req))
-    );
+    try {
+      await updateRequestData(updatedRequest.id, updatedRequest);
+      setRequests((prev) =>
+        prev.map((req) => (req.id === updatedRequest.id ? updatedRequest : req))
+      );
+      setEditMode(false); // Keep dialog open, user can close it or make further edits.
+      // Or, if preferred, close dialog: find the Dialog's open/onOpenChange prop and control it.
+      // For simplicity, current behavior (dialog stays open) is maintained.
+      setCurrentRequest(updatedRequest); // Ensure currentRequest reflects the saved state
 
-    setEditMode(false);
-    setCurrentRequest(updatedRequest);
-
-    toast({
-      title: "Request updated",
-      description: `Moderation request ${updatedRequest.id} has been updated.`,
-    });
+      toast({
+        title: "Request updated",
+        description: `Moderation request ${updatedRequest.id} has been updated.`,
+      });
+    } catch (error) {
+      console.log(error.message);
+      toast({
+        title: "Error updating request",
+        description: "Failed to update the moderation request.",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredRequests = requests.filter((request) => {
@@ -214,9 +183,8 @@ export default function ModerationRequests() {
       request.id.toLowerCase().includes(searchLower) ||
       request.content.toLowerCase().includes(searchLower) ||
       request.status.toLowerCase().includes(searchLower) ||
-      request.flags.some((flag) =>
-        flag.type.toLowerCase().includes(searchLower)
-      )
+      // Updated: Search in the single flag object's type
+      (request.flags && request.flags.type.toLowerCase().includes(searchLower))
     );
   });
 
@@ -274,7 +242,7 @@ export default function ModerationRequests() {
                             {new Date(request.timestamp).toLocaleString()}
                           </TableCell>
                           <TableCell>
-                            {request.contentType === "text" ? (
+                            {request.content_type == "text" ? (
                               <Badge
                                 variant="outline"
                                 className="flex items-center gap-1"
@@ -287,7 +255,8 @@ export default function ModerationRequests() {
                                 variant="outline"
                                 className="flex items-center gap-1"
                               >
-                                <FileText className="h-3 w-3" />
+                                <FileText className="h-3 w-3" />{" "}
+                                {/* Consider using an Image icon here */}
                                 <span>Image</span>
                               </Badge>
                             )}
@@ -311,16 +280,14 @@ export default function ModerationRequests() {
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-1 flex-wrap">
-                              {request.flags
-                                .filter((flag) => flag.flagged)
-                                .map((flag, idx) => (
-                                  <ModerationBadge
-                                    key={idx}
-                                    type={flag.type}
-                                    score={flag.score}
-                                    showScore={false}
-                                  />
-                                ))}
+                              {/* Updated: Display single flag if it exists and is flagged */}
+                              {request.flags && request.flags.flagged && (
+                                <ModerationBadge
+                                  type={request.flags.type}
+                                  score={request.flags.score}
+                                  showScore={false}
+                                />
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -330,12 +297,12 @@ export default function ModerationRequests() {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleViewRequest(request)}
+                                    onClick={() => handleEditRequest(request)}
                                     className="flex items-center gap-1"
                                   >
-                                    <Eye className="h-3 w-3" />
+                                    <Edit className="h-3 w-3" />
                                     <span className="sr-only md:not-sr-only">
-                                      View
+                                      Edit
                                     </span>
                                   </Button>
                                 </DialogTrigger>
@@ -369,7 +336,7 @@ export default function ModerationRequests() {
                                             Content Type
                                           </Label>
                                           <div className="font-medium">
-                                            {currentRequest.contentType ===
+                                            {currentRequest.content_type ===
                                             "text"
                                               ? "Text"
                                               : "Image"}
@@ -382,7 +349,7 @@ export default function ModerationRequests() {
                                           Content
                                         </Label>
                                         <div className="mt-1 p-3 bg-muted rounded-md">
-                                          {currentRequest.contentType ===
+                                          {currentRequest.content_type ===
                                           "text" ? (
                                             <p className="whitespace-pre-wrap">
                                               {currentRequest.content}
@@ -397,73 +364,89 @@ export default function ModerationRequests() {
                                         </div>
                                       </div>
 
-                                      <div>
-                                        <Label className="text-muted-foreground text-sm mb-2 block">
-                                          Content Flags
-                                        </Label>
-                                        <div className="space-y-4">
-                                          {currentRequest.flags.map(
-                                            (flag, idx) => (
-                                              <div
-                                                key={idx}
-                                                className="flex items-center justify-between"
-                                              >
-                                                <div className="flex items-center gap-2">
-                                                  {editMode ? (
-                                                    <Checkbox
-                                                      id={`flag-${flag.type}`}
-                                                      checked={flag.flagged}
-                                                      onCheckedChange={() =>
-                                                        toggleFlag(flag.type)
-                                                      }
-                                                    />
-                                                  ) : flag.flagged ? (
-                                                    <div className="h-4 w-4 rounded-sm bg-destructive flex items-center justify-center">
-                                                      <Check className="h-3 w-3 text-white" />
-                                                    </div>
-                                                  ) : (
-                                                    <div className="h-4 w-4 rounded-sm border border-border" />
-                                                  )}
-                                                  <Label
-                                                    htmlFor={`flag-${flag.type}`}
-                                                    className="cursor-pointer"
-                                                  >
-                                                    <ModerationBadge
-                                                      type={flag.type}
-                                                      showScore={false}
-                                                    />
-                                                  </Label>
-                                                </div>
-
-                                                <div className="flex items-center gap-2">
-                                                  <div className="w-full bg-muted rounded-full h-2 min-w-[100px]">
-                                                    <div
-                                                      className={`h-2 rounded-full ${
-                                                        flag.score > 0.8
-                                                          ? "bg-destructive"
-                                                          : flag.score > 0.6
-                                                          ? "bg-amber-500"
-                                                          : "bg-green-500"
-                                                      }`}
-                                                      style={{
-                                                        width: `${Math.round(
-                                                          flag.score * 100
-                                                        )}%`,
-                                                      }}
-                                                    ></div>
-                                                  </div>
-                                                  <span className="text-sm font-medium w-12 text-right">
-                                                    {Math.round(
-                                                      flag.score * 100
+                                      {/* Updated: Display details for the single flag object */}
+                                      {currentRequest.flags ? (
+                                        <div>
+                                          <Label className="text-muted-foreground text-sm mb-2 block">
+                                            Content Flag
+                                          </Label>
+                                          <div className="space-y-4">
+                                            {(() => {
+                                              // IIFE to use const for flag
+                                              const flag =
+                                                currentRequest.flags!;
+                                              return (
+                                                <div className="flex items-center justify-between">
+                                                  <div className="flex items-center gap-2">
+                                                    {editMode ? (
+                                                      <Checkbox
+                                                        id={`flag-${flag.type}`}
+                                                        checked={flag.flagged}
+                                                        onCheckedChange={
+                                                          toggleCurrentRequestFlag
+                                                        }
+                                                      />
+                                                    ) : flag.flagged ? (
+                                                      <div className="h-4 w-4 rounded-sm bg-destructive flex items-center justify-center">
+                                                        <Check className="h-3 w-3 text-white" />
+                                                      </div>
+                                                    ) : (
+                                                      <div className="h-4 w-4 rounded-sm border border-border" />
                                                     )}
-                                                    %
-                                                  </span>
+                                                    <Label
+                                                      htmlFor={`flag-${flag.type}`}
+                                                      className={`cursor-pointer ${
+                                                        !editMode
+                                                          ? "pointer-events-none"
+                                                          : ""
+                                                      }`}
+                                                    >
+                                                      <ModerationBadge
+                                                        type={flag.type}
+                                                        showScore={false}
+                                                      />
+                                                    </Label>
+                                                  </div>
+
+                                                  <div className="flex items-center gap-2">
+                                                    <div className="w-full bg-muted rounded-full h-2 min-w-[100px]">
+                                                      <div
+                                                        className={`h-2 rounded-full ${
+                                                          flag.score > 0.8
+                                                            ? "bg-destructive"
+                                                            : flag.score > 0.6
+                                                            ? "bg-amber-500"
+                                                            : "bg-green-500"
+                                                        }`}
+                                                        style={{
+                                                          width: `${Math.round(
+                                                            flag.score * 100
+                                                          )}%`,
+                                                        }}
+                                                      ></div>
+                                                    </div>
+                                                    <span className="text-sm font-medium w-12 text-right">
+                                                      {Math.round(
+                                                        flag.score * 100
+                                                      )}
+                                                      %
+                                                    </span>
+                                                  </div>
                                                 </div>
-                                              </div>
-                                            )
-                                          )}
+                                              );
+                                            })()}
+                                          </div>
                                         </div>
-                                      </div>
+                                      ) : (
+                                        <div>
+                                          <Label className="text-muted-foreground text-sm mb-2 block">
+                                            Content Flag
+                                          </Label>
+                                          <p className="text-muted-foreground text-sm">
+                                            No flag data for this request.
+                                          </p>
+                                        </div>
+                                      )}
 
                                       <div>
                                         <Label
@@ -499,7 +482,15 @@ export default function ModerationRequests() {
                                           <>
                                             <Button
                                               variant="outline"
-                                              onClick={() => setEditMode(false)}
+                                              onClick={() => {
+                                                setEditMode(false);
+                                                // Optionally reset feedbackText if changes shouldn't persist from edit mode
+                                                if (currentRequest)
+                                                  setFeedbackText(
+                                                    currentRequest.feedback ||
+                                                      ""
+                                                  );
+                                              }}
                                             >
                                               Cancel
                                             </Button>
@@ -511,6 +502,8 @@ export default function ModerationRequests() {
                                           <Button
                                             onClick={() => setEditMode(true)}
                                           >
+                                            {" "}
+                                            {/* Corrected: set to true to enable editing */}
                                             Edit Request
                                           </Button>
                                         )}
@@ -519,8 +512,50 @@ export default function ModerationRequests() {
                                   )}
                                 </DialogContent>
                               </Dialog>
-
-                              <Button
+                              {/*<Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  handleEditRequest(request);
+                                }}
+                              />
+                              */}
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="flex items-center gap-1"
+                                  >
+                                    <X className="h-3 w-3" />
+                                    <span className="sr-only md:not-sr-only">
+                                      Delete
+                                    </span>
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-sm">
+                                  <DialogHeader>
+                                    <DialogTitle>Confirm Deletion</DialogTitle>
+                                    <DialogDescription>
+                                      Are you sure you want to delete this
+                                      moderation request? This action cannot be
+                                      undone.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="flex justify-end gap-2 mt-4">
+                                    <Button variant="outline">Cancel</Button>
+                                    <Button
+                                      variant="destructive"
+                                      onClick={() => {
+                                        handleDeleteRequest(request.id); // Call the delete function here
+                                      }}
+                                    >
+                                      Delete
+                                    </Button>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                              {/* <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleEditRequest(request)}
@@ -530,7 +565,7 @@ export default function ModerationRequests() {
                                 <span className="sr-only md:not-sr-only">
                                   Edit
                                 </span>
-                              </Button>
+                              </Button> */}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -563,7 +598,6 @@ export default function ModerationRequests() {
           </Card>
         </div>
       </main>
-
       <Footer />
     </div>
   );
