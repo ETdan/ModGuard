@@ -5,7 +5,10 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-console.log(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Debug logs
+console.log("Supabase URL:", SUPABASE_URL);
+console.log("Supabase Key:", SUPABASE_ANON_KEY);
+
 // Function to insert a new request_data record
 export const insertRequestData = async (data) => {
   const { data: result, error } = await supabase
