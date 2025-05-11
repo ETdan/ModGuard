@@ -31,10 +31,30 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build the app
-        run: npm run build
+      - name: Verify Environment Variables
+        run: |
+          echo "Checking environment variables:"
+          echo "VITE_SUPABASE_URL exists: ${{ secrets.VITE_SUPABASE_URL != '' }}"
+          echo "VITE_SUPABASE_ANON_KEY exists: ${{ secrets.VITE_SUPABASE_ANON_KEY != '' }}"
+          echo "VITE_MODERATION_URL exists: ${{ secrets.VITE_MODERATION_URL != '' }}"
+          echo "VITE_PUBLIC_TEST_MODERATION_URL exists: ${{ secrets.VITE_PUBLIC_TEST_MODERATION_URL != '' }}"
+          echo "VITE_PUBLIC_MODERATION_API_KEY exists: ${{ secrets.VITE_PUBLIC_MODERATION_API_KEY != '' }}"
+          echo "AZURE_TOKEN exists: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ICY_SMOKE_0C673F103 != '' }}"
 
-      - name: Install OIDC Client from Core Package
+      - name: Build the app
+        run: |
+          echo "Building with env variables:"
+          echo "VITE_SUPABASE_URL: $VITE_SUPABASE_URL"
+          npm run build
+          ls -la dist/
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_MODERATION_URL: ${{ secrets.VITE_MODERATION_URL }}
+          VITE_PUBLIC_TEST_MODERATION_URL: ${{ secrets.VITE_PUBLIC_TEST_MODERATION_URL }}
+          VITE_PUBLIC_MODERATION_API_KEY: ${{ secrets.VITE_PUBLIC_MODERATION_API_KEY }}
+
+      - name: Install OIDC Client
         run: npm install @actions/core@1.6.0 @actions/http-client
 
       - name: Get Id Token
@@ -52,9 +72,9 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ICY_SMOKE_0C673F103 }}
           action: "upload"
-          app_location: "/" # App source code path
-          api_location: "" # Api source code path - optional
-          output_location: "dist" # Built app content directory
+          app_location: "/"
+          api_location: ""
+          output_location: "dist"
           github_id_token: ${{ steps.idtoken.outputs.result }}
 
   close_pull_request_job:
