@@ -18,7 +18,22 @@ export default defineConfig(({ mode }) => ({
     },
   },
   define: {
-    "process.env": process.env,
+    "process.env": {
+      VITE_SUPABASE_URL: JSON.stringify(process.env.VITE_SUPABASE_URL),
+      VITE_SUPABASE_ANON_KEY: JSON.stringify(
+        process.env.VITE_SUPABASE_ANON_KEY
+      ),
+      VITE_MODERATION_URL: JSON.stringify(process.env.VITE_MODERATION_URL),
+      VITE_PUBLIC_TEST_MODERATION_URL: JSON.stringify(
+        process.env.VITE_PUBLIC_TEST_MODERATION_URL
+      ),
+      VITE_PUBLIC_MODERATION_API_KEY: JSON.stringify(
+        process.env.VITE_PUBLIC_MODERATION_API_KEY
+      ),
+    },
+  },
+  build: {
+    outDir: "../dist", // change to your preferred path
   },
 }));
 
