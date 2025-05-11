@@ -9,13 +9,6 @@ on:
     branches:
       - main
 
-env:
-  VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-  VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-  VITE_PUBLIC_MODERATION_API_KEY: ${{ secrets.VITE_PUBLIC_MODERATION_API_KEY }}
-  VITE_PUBLIC_TEST_MODERATION_URL: ${{ secrets.VITE_PUBLIC_TEST_MODERATION_URL }}
-  VITE_MODERATION_URL: ${{ secrets.VITE_MODERATION_URL }}
-
 jobs:
   build_and_deploy_job:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
@@ -40,9 +33,11 @@ jobs:
 
       - name: Verify Environment Variables
         run: |
-          echo "Supabase URL: $VITE_SUPABASE_URL"
-          echo "Moderation URL: $VITE_MODERATION_URL"
-          echo "Test Moderation URL: $VITE_PUBLIC_TEST_MODERATION_URL"
+          echo "Supabase URL: ${{ secrets.VITE_SUPABASE_URL }}"
+          echo "Supabase Key: ${{ secrets.VITE_SUPABASE_ANON_KEY }}"
+          echo "Moderation URL: ${{ secrets.VITE_MODERATION_URL }}"
+          echo "Test Mod URL: ${{ secrets.VITE_PUBLIC_TEST_MODERATION_URL }}"
+          echo "Mod API Key: ${{ secrets.VITE_PUBLIC_MODERATION_API_KEY }}"
 
       - name: Build the app
         run: npm run build
@@ -53,7 +48,7 @@ jobs:
           VITE_PUBLIC_TEST_MODERATION_URL: ${{ secrets.VITE_PUBLIC_TEST_MODERATION_URL }}
           VITE_MODERATION_URL: ${{ secrets.VITE_MODERATION_URL }}
 
-      - name: Install OIDC Client from Core Package
+      - name: Install OIDC Client
         run: npm install @actions/core@1.6.0 @actions/http-client
 
       - name: Get Id Token
