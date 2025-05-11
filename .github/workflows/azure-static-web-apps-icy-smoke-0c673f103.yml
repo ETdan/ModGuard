@@ -123,22 +123,6 @@ jobs:
           echo "VITE_PUBLIC_TEST_MODERATION_URL: ${{ secrets.VITE_PUBLIC_TEST_MODERATION_URL && '****' || 'NOT SET' }}"
           echo "VITE_PUBLIC_MODERATION_API_KEY: ${{ secrets.VITE_PUBLIC_MODERATION_API_KEY && '****' || 'NOT SET' }}"
           echo "AZURE_TOKEN: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ICY_SMOKE_0C673F103 && '****' || 'NOT SET' }}"
-
-      - name: Verify Non-Empty Values
-        run: |
-          if [ -z "$VITE_SUPABASE_URL" ]; then echo "Error: VITE_SUPABASE_URL is empty"; exit 1; fi
-          if [ -z "$VITE_SUPABASE_ANON_KEY" ]; then echo "Error: VITE_SUPABASE_ANON_KEY is empty"; exit 1; fi
-          if [ -z "$VITE_MODERATION_URL" ]; then echo "Error: VITE_MODERATION_URL is empty"; exit 1; fi
-          if [ -z "$VITE_PUBLIC_TEST_MODERATION_URL" ]; then echo "Error: VITE_PUBLIC_TEST_MODERATION_URL is empty"; exit 1; fi
-          if [ -z "$VITE_PUBLIC_MODERATION_API_KEY" ]; then echo "Error: VITE_PUBLIC_MODERATION_API_KEY is empty"; exit 1; fi
-          echo "All required environment variables are set"
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_MODERATION_URL: ${{ secrets.VITE_MODERATION_URL }}
-          VITE_PUBLIC_TEST_MODERATION_URL: ${{ secrets.VITE_PUBLIC_TEST_MODERATION_URL }}
-          VITE_PUBLIC_MODERATION_API_KEY: ${{ secrets.VITE_PUBLIC_MODERATION_API_KEY }}
-
       - name: Build the app
         run: |
           echo "Building with env variables:"
