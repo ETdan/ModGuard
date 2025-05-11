@@ -32,9 +32,6 @@ export default defineConfig(({ mode }) => ({
       ),
     },
   },
-  build: {
-    outDir: "../dist", // change to your preferred path
-  },
 }));
 
 // import { defineConfig } from "vite";
