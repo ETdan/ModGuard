@@ -141,7 +141,6 @@ export default function ApiManagement() {
   const handleRevokeKey = async (id: string) => {
     try {
       const { error } = await supabase.from("api_key").delete().eq("id", id);
-      console.log("id", id);
       if (error) {
         console.error("Error revoking API key:", error);
         toast({
