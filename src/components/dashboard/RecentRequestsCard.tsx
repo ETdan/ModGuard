@@ -1,27 +1,47 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import ModerationBadge from "../ModerationBadge";
 
+type ModerationType =
+  | "toxicity"
+  | "harassment"
+  | "hate-speech"
+  | "sexual"
+  | "violence"
+  | "spam";
+
+type FlagObject = {
+  type: ModerationType;
+  score: number;
+  flagged: boolean;
+};
+
 type RequestData = {
   id: string;
   timestamp: string;
-  contentType: 'text' | 'image';
+  content_type: "text" | "image";
   content: string;
-  flags: Array<{
-    type: 'toxicity' | 'harassment' | 'hate-speech' | 'sexual' | 'violence' | 'spam';
-    score: number;
-  }>;
-  status: 'flagged' | 'clean' | 'borderline';
-}
+  flags?: FlagObject;
+  status: "flagged" | "clean" | "borderline";
+  feedback?: string;
+};
 
 type RecentRequestsCardProps = {
   requests: RequestData[];
-}
+};
 
-export default function RecentRequestsCard({ requests }: RecentRequestsCardProps) {
+export default function RecentRequestsCard({
+  requests,
+}: RecentRequestsCardProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -50,18 +70,17 @@ export default function RecentRequestsCard({ requests }: RecentRequestsCardProps
                   {request.content}
                 </TableCell>
                 <TableCell>
-                  {request.contentType === 'text' ? 'Text' : 'Image'}
+                  {request.content_type === "text" ? "Text" : "Image"}
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1 flex-wrap">
-                    {request.flags.map((flag, idx) => (
-                      <ModerationBadge 
-                        key={idx} 
-                        type={flag.type} 
-                        score={flag.score} 
+                    {request.flags && request.flags.flagged && (
+                      <ModerationBadge
+                        type={request.flags.type}
+                        score={request.flags.score}
                         showScore={false}
                       />
-                    ))}
+                    )}
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground text-sm">

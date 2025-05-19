@@ -21,6 +21,12 @@ export const fetchRequestData = async () => {
   return data;
 };
 
+export const fetchRequestDataStats = async () => {
+  const { data, error } = await supabase.from("request_data").select("*");
+  if (error) throw error;
+  return data;
+};
+
 // Function to update a request_data record by ID
 // export const updateRequestData = async (id, updates) => {
 //   console.log(updates);
